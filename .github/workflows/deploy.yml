@@ -47,3 +47,9 @@ jobs:
 
       - name: Verify Google Cloud authentication
         run: gcloud auth list
+         
+      - name: Upload function package
+        run: |
+          gcloud storage cp \
+            ./build/hello-function.zip \
+            gs://cloud-backend-lab-source-2026/hello-function.zip
