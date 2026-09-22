@@ -31,3 +31,6 @@ jobs:
 
       - name: Package function
         run: npm run package:function
+
+      - name: Verify package
+        run: tar -tf ./build/hello-function.zip
