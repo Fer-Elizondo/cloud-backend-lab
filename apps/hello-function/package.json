@@ -1,0 +1,22 @@
+{
+  "name": "hello-function",
+  "version": "1.0.0",
+  "description": "Cloud backend laboratory - Hello Function",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "functions-framework --target=hello",
+    "test": "echo \"Tests not implemented yet\""
+  },
+  "keywords": [],
+  "author": "Fernando Elizondo",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^5.9.0"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^5.0.5"
+  }
+}

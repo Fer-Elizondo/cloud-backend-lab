@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext", //Esto le dice a TypeScript que queremos utilizar el sistema de módulos de Node.js moderno.
+    "moduleResolution": "NodeNext", //"Cuando busques los módulos importados, utiliza las reglas modernas de resolución de módulos de Node."
+
+    "rootDir": "./src", //Estamos diciendo donde esta el codigo typescritp
+    "outDir": "./dist",
+
+    "types": ["node"], //las definiciones de tipos de Node
+
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    "strict": true, //Nos ayuda a detectar errores
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"], //Compila los archivos TypeScript que estén dentro de src
+  "exclude": ["node_modules", "dist"] //Le decimos que no intente compilar
+}

@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# TypeScript build
+dist/
+
+# Generated artifacts
+build/
+*.zip
+
+# Environment variables
+.env
+.env.*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+
+# Terraform lock file should be committed
+!.terraform.lock.hcl
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/

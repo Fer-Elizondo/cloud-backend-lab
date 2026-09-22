@@ -6,5 +6,11 @@
     "apps/*",
     "packages/*"
   ],
-  "scripts": {}
+  "scripts": {
+    "build:function": "npm run build --workspace hello-function",
+    "package:function": "node scripts/package-function.mjs"
+  },
+  "devDependencies": {
+    "archiver": "^8.0.0"
+  }
 }
