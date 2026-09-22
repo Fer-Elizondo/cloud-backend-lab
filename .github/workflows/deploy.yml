@@ -33,4 +33,4 @@ jobs:
         run: npm run package:function
 
       - name: Verify package
-        run: tar -tf ./build/hello-function.zip
+        run: unzip -l ./build/hello-function.zip
