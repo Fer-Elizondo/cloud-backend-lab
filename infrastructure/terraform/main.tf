@@ -101,12 +101,6 @@ resource "google_storage_bucket" "source" {
   uniform_bucket_level_access = true
 }
 
-resource "google_storage_bucket_object" "function_source" {
-  name   = "hello-function.zip"
-  bucket = google_storage_bucket.source.name
-  source = "../../build/hello-function.zip"
-}
-
 resource "google_project_iam_member" "compute_log_writer" {
   project = var.project_id
   role    = "roles/logging.logWriter"
@@ -125,23 +119,6 @@ resource "google_project_iam_member" "compute_run_builder" {
   member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 
-resource "google_cloudfunctions2_function" "hello" {
-  name     = "hello-function"
-  location = var.region
-
-  build_config {
-    runtime     = "nodejs24"
-    entry_point = "hello"
-
-    source {
-      storage_source {
-        bucket = google_storage_bucket.source.name
-        object = google_storage_bucket_object.function_source.name
-      }
-    }
-  }
-}
-
 output "github_actions_service_account" {
   description = "Service Account used by GitHub Actions"
   value       = google_service_account.github_actions.email
@@ -150,4 +127,15 @@ output "github_actions_service_account" {
 output "workload_identity_provider" {
   description = "Workload Identity Provider used by GitHub Actions"
   value       = google_iam_workload_identity_pool_provider.github.name
+}
+
+output "source_bucket_name" {
+  description = "Cloud Storage bucket used for Cloud Function source"
+  value       = google_storage_bucket.source.name
+}
+
+resource "google_service_account_iam_member" "github_actions_runtime_sa" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
 }

@@ -1,4 +1,4 @@
-name: Build Hello Function
+name: Build and Deploy Hello Function
 
 on:
   push:
@@ -16,6 +16,12 @@ jobs:
     permissions:
       contents: read
       id-token: write
+
+    env:
+      PROJECT_ID: project-34fb4314-f457-40cc-9e1
+      REGION: us-central1
+      FUNCTION_NAME: hello-function
+      BUCKET_NAME: cloud-backend-lab-source-2026
 
     steps:
       - name: Checkout repository
@@ -47,9 +53,27 @@ jobs:
 
       - name: Verify Google Cloud authentication
         run: gcloud auth list
-         
+
       - name: Upload function package
         run: |
           gcloud storage cp \
             ./build/hello-function.zip \
-            gs://cloud-backend-lab-source-2026/hello-function.zip
+            gs://${BUCKET_NAME}/hello-function.zip
+
+      - name: Deploy Cloud Function
+        run: |
+          gcloud functions deploy ${FUNCTION_NAME} \
+            --gen2 \
+            --project=${PROJECT_ID} \
+            --region=${REGION} \
+            --runtime=nodejs24 \
+            --source=gs://${BUCKET_NAME}/hello-function.zip \
+            --entry-point=hello \
+            --quiet
+
+      - name: Verify deployment
+        run: |
+          gcloud functions describe ${FUNCTION_NAME} \
+            --gen2 \
+            --project=${PROJECT_ID} \
+            --region=${REGION}
