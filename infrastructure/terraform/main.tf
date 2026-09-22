@@ -12,8 +12,66 @@ provider "google" {
   region  = var.region
 }
 
+
 data "google_project" "current" {
   project_id = var.project_id
+}
+
+resource "google_service_account" "github_actions" {
+  account_id   = "github-actions-deployer"
+  display_name = "GitHub Actions Deployer"
+}
+
+resource "google_project_iam_member" "github_actions_cloudfunctions" {
+  project = var.project_id
+  role    = "roles/cloudfunctions.developer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "github_actions_storage" {
+  project = var.project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "github_actions_cloudbuild" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.editor"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_iam_workload_identity_pool" "github" {
+  workload_identity_pool_id = "github-actions"
+  display_name              = "GitHub Actions"
+  description               = "Workload Identity Pool for GitHub Actions"
+  disabled                  = false
+}
+
+resource "google_iam_workload_identity_pool_provider" "github" {
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
+  workload_identity_pool_provider_id = "github"
+  display_name                       = "GitHub Actions OIDC Provider"
+
+  attribute_mapping = {
+    "google.subject"       = "assertion.sub"
+    "attribute.actor"      = "assertion.actor"
+    "attribute.repository" = "assertion.repository"
+    "attribute.ref"        = "assertion.ref"
+  }
+
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+
+  attribute_condition = "assertion.repository == 'Fer-Elizondo/cloud-backend-lab'"
+}
+
+
+resource "google_service_account_iam_member" "github_actions_wif" {
+  service_account_id = google_service_account.github_actions.name
+  role               = "roles/iam.workloadIdentityUser"
+
+  member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/Fer-Elizondo/cloud-backend-lab"
 }
 
 resource "google_project_service" "cloudfunctions" {
@@ -82,4 +140,14 @@ resource "google_cloudfunctions2_function" "hello" {
       }
     }
   }
+}
+
+output "github_actions_service_account" {
+  description = "Service Account used by GitHub Actions"
+  value       = google_service_account.github_actions.email
+}
+
+output "workload_identity_provider" {
+  description = "Workload Identity Provider used by GitHub Actions"
+  value       = google_iam_workload_identity_pool_provider.github.name
 }
