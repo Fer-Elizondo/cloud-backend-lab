@@ -99,6 +99,30 @@ resource "google_project_service" "run" {
   service = "run.googleapis.com"
 }
 
+resource "google_project_service" "secretmanager" {
+  project = var.project_id
+  service = "secretmanager.googleapis.com"
+}
+
+resource "google_secret_manager_secret" "app_message" {
+  secret_id = "app-message"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [
+    google_project_service.secretmanager
+  ]
+}
+
+resource "google_secret_manager_secret_iam_member" "app_message_accessor" {
+  secret_id = google_secret_manager_secret.app_message.id
+  role      = "roles/secretmanager.secretAccessor"
+
+  member = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 resource "google_storage_bucket" "source" {
   name     = var.bucket_name
   location = var.region

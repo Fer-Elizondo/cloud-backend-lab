@@ -69,6 +69,7 @@ jobs:
             --runtime=nodejs24 \
             --source=gs://${BUCKET_NAME}/hello-function.zip \
             --entry-point=hello \
+            --set-env-vars=GCP_PROJECT_ID=${PROJECT_ID} \
             --quiet
 
       - name: Verify deployment
