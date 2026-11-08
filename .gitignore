@@ -3,6 +3,7 @@ node_modules/
 
 # TypeScript build
 dist/
+dist-production/
 
 # Generated artifacts
 build/
@@ -11,6 +12,16 @@ build/
 # Environment variables
 .env
 .env.*
+!.env.example
+!**/.env.example
+*.env
+*.env.*
+
+# Local npm configuration may contain registry credentials
+.npmrc
+**/.npmrc
+!.npmrc.example
+!**/.npmrc.example
 
 # Terraform
 .terraform/
@@ -18,6 +29,9 @@ build/
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+*.tfvars.*
+*.tfplan
+crash.log
 
 # Terraform lock file should be committed
 !.terraform.lock.hcl
@@ -26,3 +40,67 @@ build/
 .DS_Store
 Thumbs.db
 .vscode/
+# Private keys and credential files
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+*.p8
+*.der
+*.crt
+*.cer
+*.jks
+*.keystore
+private_key
+private-key
+credentials*.json
+*credentials*.json
+*-credentials.json
+service-account*.json
+*service-account*.json
+*service_account*.json
+application_default_credentials.json
+application_default_credentials.*
+
+# SSH material without a filename extension
+.ssh/
+**/.ssh/
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+id_ed25519_sk
+
+# Local machine configuration
+.envrc
+*.local
+*.local.*
+.terraformrc
+terraform.rc
+.config/gcloud/
+.aws/
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.bak
+*.backup
+*.old
+*.orig
+
+# Test reports and local-only manual helpers
+coverage/
+**/coverage/
+.nyc_output/
+test-results/
+playwright-report/
+apps/hello-function/src/auth/test-auth.ts
+apps/hello-function/src/test-db.ts

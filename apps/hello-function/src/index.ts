@@ -1,53 +1,20 @@
-import { http } from "@google-cloud/functions-framework";
-import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
+import express from "express";
+import projectRouter from "./routes/project.routes.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import authRouter from "./auth/auth.routes.js";
+import { parseRuntimeConfig } from "./config/environment.js";
 
-const client = new SecretManagerServiceClient();
+// The complete application entry point requires both authentication and database configuration.
+parseRuntimeConfig();
 
-http("hello", async (req, res) => {
-  console.log(
-    JSON.stringify({
-      severity: "INFO",
-      event: "request_received",
-      method: req.method,
-      path: req.path,
-    })
-  );
+const app = express();
 
-  try {
-    const projectId = process.env.GCP_PROJECT_ID;
+app.use(express.json());
 
-    if (!projectId) {
-      throw new Error("GCP_PROJECT_ID environment variable is not configured");
-    }
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1", projectRouter);
 
-    const [version] = await client.accessSecretVersion({
-      name: `projects/${projectId}/secrets/app-message/versions/latest`,
-    });
+app.use(errorHandler);
 
-    const message = version.payload?.data?.toString() ?? "Secret not found";
-
-    console.log(
-      JSON.stringify({
-        severity: "INFO",
-        event: "secret_accessed",
-        secret: "app-message",
-      })
-    );
-
-    res.status(200).json({
-      message,
-    });
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        severity: "ERROR",
-        event: "secret_access_failed",
-        error: error instanceof Error ? error.message : String(error),
-      })
-    );
-
-    res.status(500).json({
-      message: "Error accessing secret",
-    });
-  }
-});
+export { app };
+export const hello = app;

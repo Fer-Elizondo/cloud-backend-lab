@@ -43,13 +43,57 @@ archive.on("error", (error) => {
 
 archive.pipe(output);
 
-archive.directory(distDir, "dist");
-
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(functionDir, "package.json"), "utf8")
 );
 
-delete packageJson.scripts?.build;
+delete packageJson.devDependencies;
+packageJson.scripts = {
+  start: packageJson.scripts?.start ?? "functions-framework --target=hello",
+};
+
+const runtimeFiles = [];
+
+function collectRuntimeFiles(sourceDirectory, archiveDirectory) {
+  for (const entry of fs.readdirSync(sourceDirectory, { withFileTypes: true })) {
+    const sourcePath = path.join(sourceDirectory, entry.name);
+    const archivePath = path.posix.join(archiveDirectory, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name !== "__tests__") {
+        collectRuntimeFiles(sourcePath, archivePath);
+      }
+
+      continue;
+    }
+
+    if (!entry.isFile() || !entry.name.endsWith(".js")) {
+      continue;
+    }
+
+    if (
+      entry.name.endsWith(".test.js") ||
+      entry.name.endsWith(".spec.js") ||
+      entry.name.startsWith("test-") ||
+      ["local.server.js", "local-server.js", "test-db.js"].includes(entry.name)
+    ) {
+      continue;
+    }
+
+    runtimeFiles.push({ sourcePath, archivePath });
+  }
+}
+
+collectRuntimeFiles(distDir, "dist");
+
+if (!runtimeFiles.some(({ archivePath }) => archivePath === "dist/index.js")) {
+  throw new Error("El artefacto no contiene dist/index.js");
+}
+
+// Cloud Functions buildpacks install production dependencies from this manifest.
+for (const { sourcePath, archivePath } of runtimeFiles) {
+  archive.file(sourcePath, { name: archivePath });
+}
 
 archive.append(JSON.stringify(packageJson, null, 2), {
   name: "package.json",

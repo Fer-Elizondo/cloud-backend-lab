@@ -4,20 +4,34 @@
   "description": "Cloud backend laboratory - Hello Function",
   "type": "module",
   "main": "dist/index.js",
+  "engines": {
+    "node": "24"
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "node ../../scripts/clean-function-dist.mjs && tsc",
+    "build:production": "node ../../scripts/clean-function-dist-production.mjs && tsc -p tsconfig.production.json",
     "start": "functions-framework --target=hello",
-    "test": "echo \"Tests not implemented yet\""
+    "dev": "node --env-file=../../.env dist/local.server.js",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run --config vitest.config.unit.ts",
+    "test:integration": "vitest run --config vitest.config.ts"
   },
   "keywords": [],
   "author": "Fernando Elizondo",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^26.6.2",
-    "typescript": "^5.9.0"
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^5.0.5",
-    "@google-cloud/secret-manager": "^7.1.0"
+    "bcrypt": "^6.0.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "zod": "^4.6.5"
   }
 }

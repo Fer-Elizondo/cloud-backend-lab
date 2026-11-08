@@ -24,5 +24,11 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"], //Compila los archivos TypeScript que estén dentro de src
-  "exclude": ["node_modules", "dist"] //Le decimos que no intente compilar
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/__tests__/**"
+  ] //Le decimos que no intente compilar
 }

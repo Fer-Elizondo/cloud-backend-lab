@@ -1,27 +1,41 @@
-name: Build and Deploy Hello Function
+name: CI - Integration Tests and Package
 
 on:
   push:
     branches:
       - main
-
   pull_request:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      id-token: write
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cloud_backend_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cloud_backend_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
-      PROJECT_ID: project-34fb4314-f457-40cc-9e1
-      REGION: us-central1
-      FUNCTION_NAME: hello-function
-      BUCKET_NAME: cloud-backend-lab-source-2026
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: cloud_backend_test
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: ci-only-password
 
     steps:
       - name: Checkout repository
@@ -36,6 +50,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run unit tests
+        run: npm run test:unit --workspace hello-function
+
+      - name: Apply database schema
+        run: |
+          PGPASSWORD="$DATABASE_PASSWORD" psql \
+            --host="$DATABASE_HOST" \
+            --port="$DATABASE_PORT" \
+            --username="$DATABASE_USER" \
+            --dbname="$DATABASE_NAME" \
+            --set=ON_ERROR_STOP=1 \
+            --file=database/schema.sql
+
+      - name: Seed integration test users
+        run: node database/seed-test-users.mjs
+
+      - name: Run integration tests
+        run: npm run test:integration --workspace hello-function
+
       - name: Build function
         run: npm run build:function
 
@@ -43,38 +76,7 @@ jobs:
         run: npm run package:function
 
       - name: Verify package
-        run: unzip -l ./build/hello-function.zip
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Verify Google Cloud authentication
-        run: gcloud auth list
-
-      - name: Upload function package
         run: |
-          gcloud storage cp \
-            ./build/hello-function.zip \
-            gs://${BUCKET_NAME}/hello-function.zip
-
-      - name: Deploy Cloud Function
-        run: |
-          gcloud functions deploy ${FUNCTION_NAME} \
-            --gen2 \
-            --project=${PROJECT_ID} \
-            --region=${REGION} \
-            --runtime=nodejs24 \
-            --source=gs://${BUCKET_NAME}/hello-function.zip \
-            --entry-point=hello \
-            --set-env-vars=GCP_PROJECT_ID=${PROJECT_ID} \
-            --quiet
-
-      - name: Verify deployment
-        run: |
-          gcloud functions describe ${FUNCTION_NAME} \
-            --gen2 \
-            --project=${PROJECT_ID} \
-            --region=${REGION}
+          unzip -t build/hello-function.zip
+          unzip -Z1 build/hello-function.zip | grep -Fx 'dist/index.js'
+          unzip -Z1 build/hello-function.zip | grep -Fx 'package.json'
